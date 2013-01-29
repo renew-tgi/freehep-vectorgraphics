@@ -49,6 +49,9 @@ import org.freehep.graphicsio.PageConstants;
 public abstract class AbstractPSGraphics2D extends AbstractVectorGraphicsIO implements FontUtilities.ShowString {
     private static final String rootKey = PSGraphics2D.class.getName();
 
+    public static final String TRANSPARENT = rootKey + "."
+            + PageConstants.TRANSPARENT;
+
     public static final String BACKGROUND = rootKey + "."
             + PageConstants.BACKGROUND;
 
@@ -242,7 +245,9 @@ public abstract class AbstractPSGraphics2D extends AbstractVectorGraphicsIO impl
 
     public void writeBackground() throws IOException {
         // since PS is non-transparent, write current background
-        if (isProperty(BACKGROUND)) {
+        if (isProperty(TRANSPARENT)) {
+            setBackground(null);
+        } else if (isProperty(BACKGROUND)) {
             setBackground(getPropertyColor(BACKGROUND_COLOR));
             clearRect(0.0, 0.0, getSize().width, getSize().height);
         } else {
