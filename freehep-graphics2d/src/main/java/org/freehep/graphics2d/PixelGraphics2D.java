@@ -1,4 +1,4 @@
-// Copyright 2000-2006, FreeHEP.
+// Copyright 2000-2014, FreeHEP.
 package org.freehep.graphics2d;
 
 import java.awt.AlphaComposite;
@@ -28,7 +28,6 @@ import java.awt.image.ImageObserver;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderableImage;
 import java.awt.print.PrinterGraphics;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.text.AttributedCharacterIterator;
@@ -88,43 +87,35 @@ public class PixelGraphics2D extends AbstractVectorGraphics {
 	private WebColor webColor;
 
 	// graphics environment stuff
-	private static boolean displayX11;
-
 	private static boolean displayLocal;
 
 	static {
 		symbols = new HashMap<WebColor, Image[][][]>();
 
-		displayX11 = false;
 		displayLocal = false;
 		try {
-			Class<?> clazz = Class.forName("sun.awt.X11GraphicsEnvironment");
-			displayX11 = true;
-
-			Method method = clazz.getMethod("isDisplayLocal");
-              		if (Modifier.isStatic(method.getModifiers())) {
-				// JDK 1.6
-                        	displayLocal = (Boolean) method.invoke(null);
-              		} else {
-                         	try {
-					// since JDK 1.7
-					displayLocal = (Boolean)method.invoke(clazz.newInstance());
-				} catch (InstantiationException  e) {
+			String className = System.getProperty("java.awt.graphicsenv");
+			if (className != null) {
+				Class<?> clazz = Class.forName(className);
+				Method method = clazz.getMethod("isDisplayLocal");
+				if (Modifier.isStatic(method.getModifiers())) {
+					// JDK 1.6
+					displayLocal = (Boolean) method.invoke(null);
+				} else {
+					try {
+						// since JDK 1.7
+						displayLocal = (Boolean) method.invoke(clazz
+								.newInstance());
+					} catch (InstantiationException e) {
+					}
 				}
-              		}
+			}
 		} catch (ClassNotFoundException e) {
 			// Windows case...
 			displayLocal = true;
-		} catch (IllegalAccessException e) {
-			// ignored
-		} catch (NoSuchMethodException e) {
-			// ignored
-		} catch (InvocationTargetException e) {
-			// ignored
-		} catch (ClassCastException e) {
-			// ignored
-		} catch (SecurityException e) {
-			// ignored
+		} catch (Throwable e) {
+			// Sun api may change, so we don't know what errors are possible.
+			// Ignore them all.
 		}
 	}
 
@@ -614,10 +605,6 @@ public class PixelGraphics2D extends AbstractVectorGraphics {
 
 	public String toString() {
 		return "PixelGraphics2D[" + hostGraphics.toString() + "]";
-	}
-
-	public static boolean isDisplayX11() {
-		return displayX11;
 	}
 
 	public static boolean isDisplayLocal() {
