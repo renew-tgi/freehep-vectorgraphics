@@ -50,6 +50,7 @@ import org.freehep.graphicsio.FontConstants;
 import org.freehep.graphicsio.ImageConstants;
 import org.freehep.graphicsio.ImageGraphics2D;
 import org.freehep.graphicsio.InfoConstants;
+import org.freehep.graphicsio.HyperrefGraphics;
 import org.freehep.graphicsio.PageConstants;
 import org.freehep.util.io.Base64OutputStream;
 import org.freehep.util.io.WriterOutputStream;
@@ -63,7 +64,7 @@ import org.freehep.util.io.WriterOutputStream;
  * @author Mark Donszelmann
  * @version $Id: freehep-graphicsio-svg/src/main/java/org/freehep/graphicsio/svg/SVGGraphics2D.java 4c4708a97391 2007/06/12 22:32:31 duns $
  */
-public class SVGGraphics2D extends AbstractVectorGraphicsIO {
+public class SVGGraphics2D extends AbstractVectorGraphicsIO implements HyperrefGraphics {
 
     public static final String VERSION_1_1 = "Version 1.1 (REC-SVG11-20030114)";
 
@@ -425,6 +426,7 @@ public class SVGGraphics2D extends AbstractVectorGraphicsIO {
     /* 5.1 shapes */
     /* 5.1.4. shapes */
 
+    
     /**
      * Draws the shape using the current paint as border
      *
@@ -454,6 +456,35 @@ public class SVGGraphics2D extends AbstractVectorGraphicsIO {
             // FIXME: do nothing or draw using defaultStroke?
             fill(defaultStroke.createStrokedShape(shape));
         }
+    }
+
+    /* (non-Javadoc)
+     * @see org.freehep.graphicsio.svg.LinkableGraphics#drawLink(java.lang.String)
+     */
+    @Override
+    public void drawLink(Shape r, String link) {
+        writeLink(link);
+    }
+
+    /* (non-Javadoc)
+     * @see org.freehep.graphicsio.svg.LinkableGraphics#drawLinkEnd()
+     */
+    @Override
+    public void drawLinkEnd() {
+        writeLinkEnd();
+    }
+
+    private void writeLink(String link) {
+        StringBuffer result = new StringBuffer();
+        result.append("<a xlink:href=\""  +  link +"\"     xlink:title=\""+link+"\">\n");
+        // write the link directly to svg
+        os.println(result.toString());
+    }
+
+    private void writeLinkEnd() {
+        StringBuffer result = new StringBuffer();
+        result.append("</a>\n  ");
+        os.println(result.toString());
     }
 
     /**
@@ -627,7 +658,7 @@ public class SVGGraphics2D extends AbstractVectorGraphicsIO {
                     new WriterOutputStream(writer));
             b64.write(imageBytes);
             b64.finish();
-
+            b64.close();
             result.append(writer.toString());
         }
 
